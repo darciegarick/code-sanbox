@@ -3,7 +3,6 @@ package routes
 import (
 	"jassue-gin/controller/app"
 	"jassue-gin/middleware"
-	"jassue-gin/openapi"
 	"jassue-gin/service"
 	"net/http"
 
@@ -24,8 +23,4 @@ func SetApiGroupRoutes(router *gin.RouterGroup) {
 		authRouter.POST("/auth/info", app.Info)
 		authRouter.POST("/auth/logout", app.Logout)
 	}
-}
-
-func SetOpenApiGroupRoutes(router *gin.RouterGroup) {
-	router.GET("/users/:id", openapi.GetUserNameRESTful)
 }
