@@ -1,44 +1,72 @@
 #### ziying - 代码沙箱
 
-##### Projects
-背景：xxx项目团队，它运营着一个广受学生青睐的在线coding平台，为学生提供了一个可自由部署项目代码环境。随着业务的扩展，xxx团队希望与知名大学、各大厂训练营和其他友商合作伙伴平台进行集成。此外，为了满足学生多样化的学习需求，xxx团队希望开放平台API，允许第三方开发者基于平台API开发在IDE产品上开发项目。
-
-##### Product requirements
-提供 API 接口供开发者调用的平台
-- 管理员可以接入并发布接口
-- 统计分析各接口调用情况
-- xxx团队用户可以注册登录并开通接口调用权限
-- 在线浏览接口、在线调试
-- 可以使用客户端SDK在代码中调用接口
-
-##### requests
-1. 保证安全性，防止攻击
-2. 不能随便被调用 （权限设置：限制 非社区用户无法使用 ）
-3. 统计接口的调用次数
-4. 计费
-5. 流量保护
-6. API接入 
-7. ==
-
-##### realization
-- go version go1.22.1 linux/amd64
-- github.com/gin-gonic/gin v1.9.1
-- Redis
-- MySQL
-- ...
+###### 主流框架 & 特性
+gin-gonic/gin v1.9.1
+gorm v1.25.9
+redis v8.11.5
+mysql v1.8.1
+jwt v5.2.1
+gin-swagger v1.6.0
+viper v1.18.2 ...
 
 
-##### 主流框架 & 特性
-- gin-gonic/gin v1.9.1
-- gorm v1.25.9
-- redis v8.11.5
-- mysql v1.8.1
-- jwt v5.2.1
-- gin-swagger v1.6.0
-- viper v1.18.2
-...
+###### 代码沙箱原理
+**通过命令行执行**
+写入代码 => 编译代码 => 执行代码
 
-##### 
+**示例**
+```java
+// 写入代码
+public class Main {
+	public void main(String[] args) {
+		int a =  Integer.parseInt(args[0]);
+		int b =  Integer.parseInt(args[1]);
+		System.out.println(a + b);
+	}
+}
+```
+
+```shell
+# 编译代码
+javac -encoding UTF-8 -cp {Main.java 文件路径}
+```
+
+```shell
+# 执行代码
+java -cp  {编译后class文件路径} Main 1 2
+```
+
+###### 实现思路
+思路：用程序代替人工，用程序来操作命令行，去编译执行代码
+1. 把用户的代码保存为文件
+2. 编译代码，得到 class 文件
+3. 执行代码，得到输出结果
+4. 收集整理输出结果
+5. 文件清理，释放空间
+6. 错误处理，提升代码的健壮性
+
+
+###### 代码实现
+1. 把用户的代码保存为文件
+    - 新建目录，将每个用户的代码都存放在独立的目录下，通过UUID随机生成目录名，便于隔离和维护
+
+    ```go
+        
+    ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
