@@ -5,6 +5,7 @@ import (
 	"jassue-gin/entity/request"
 	"jassue-gin/entity/response"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/google/uuid"
@@ -50,7 +51,7 @@ func SaveCodeToFile(code string) (*os.File, string, error) {
 	file, err := os.Create(userCodePath)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed to create Main.java: %v", err)
-	} 
+	}
 
 	// 写入代码
 	_, err = file.WriteString(code)
@@ -58,33 +59,79 @@ func SaveCodeToFile(code string) (*os.File, string, error) {
 		file.Close()
 		return nil, "", fmt.Errorf("Failed to write file: %v", err)
 	}
-	return file, userCodePath, nil
+	return file, userCodeParentPath, nil
 }
 
 // 编译文件
-func CompileFile(string) (string) {
-
-	return ""
-
+func CompileFile(mainJavaDirPath string) {
+	mainJavaPath := filepath.Join(mainJavaDirPath, GLOBAL_JAVA_CLASS_NAME)
+	compileCmd := fmt.Sprintf("javac -encoding utf-8 %s", mainJavaPath)
+	cmd := exec.Command("bash", "-c", compileCmd)
+	cmdErr := cmd.Run()
+	if cmdErr != nil {
+		fmt.Printf("Compile error: %v", cmdErr)
+		return
+	}
 }
 
-// func CompileFile(file *os.File) (*os.File, error) {
-// 	mainJavaPath, err := getFilePath(file)
+// 执行文件，获得执行结果列表
+func RunFile(mainClassDirPath string) (string, error) {
+	compileCmd := fmt.Sprintf("java -cp  %s Main", mainClassDirPath)
+	cmd := exec.Command("bash", "-c", compileCmd)
+	output, err := cmd.CombinedOutput()
+	outputStr := string(output)
 
-// 	fmt.Println("!!!!!mainJavaPath:", mainJavaPath)
+	if err != nil {
+		if _, ok := err.(*exec.ExitError); ok {
+			return outputStr, nil
+		} else {
+			fmt.Printf("运行命令执行失败：%v\n", err)
+			return "", err
+		}
+	}
+	return outputStr, nil
+}
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	compileCmd := fmt.Sprintf("javac -encoding utf-8 %s", mainJavaPath)
-// 	cmd := exec.Command("bash", "-c", compileCmd)
+// 删除文件夹
+// 删除指定目录及其所有文件的函数
+func DeleteDirectory(dirPath string) error {
+	// 获取目录下的所有文件和子目录
+	files, err := filepath.Glob(filepath.Join(dirPath, "*"))
+	if err != nil {
+		return err
+	}
 
-// 	cmdErr := cmd.Run()
-// 	if cmdErr != nil {
-// 		return nil, cmdErr
-// 	}
+	// 遍历所有文件和子目录
+	for _, file := range files {
+		// 如果是子目录，则递归调用删除函数
+		if isDir(file) {
+			err := DeleteDirectory(file)
+			if err != nil {
+				return err
+			}
+		} else {
+			// 如果是文件，则直接删除
+			err := os.Remove(file)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
-// 	fmt.Println("Compile success!!!!!!!!!!!!!!!!!!!")
-// 	return file, nil
+	// 删除空目录
+	err = os.Remove(dirPath)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Directory deleted successfully:", dirPath)
+	return nil
+}
 
-// }
+// 判断路径是否为目录的辅助函数
+func isDir(path string) bool {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return fileInfo.IsDir()
+}
