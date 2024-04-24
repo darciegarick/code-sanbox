@@ -1,4 +1,27 @@
 info:
   contact: {}
-paths: {}
+paths:
+  /api/sanbox/java:
+    post:
+      consumes:
+      - application/json
+      description: 用于运行用户的 Java 代码
+      parameters:
+      - description: Code to execute
+        example: '{"code": "Java 代码"}'
+        in: body
+        name: code
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Java 的代码沙箱
+      tags:
+      - example
 swagger: "2.0"

@@ -175,6 +175,7 @@ java -cp  {编译后class文件路径} Main
 
 **Java代码沙箱完整代码示例如下：**
 ```go
+// /code-sanbox/test/demotest.go
 package main
 
 import (
@@ -204,11 +205,7 @@ func main() {
 	}
 }
 	`
-
 	_, path, err := SaveCodeToFile(code)
-
-	fmt.Println("!!!!!!!!!!!!path", path)
-
 	if err != nil {
 		return
 	}
@@ -218,19 +215,9 @@ func main() {
 		fmt.Println("!!!!!!!!!!!!err1", err1)
 		return
 	}
-	fmt.Println("!!!!!!!!!!!!consoleInfo", consoleInfo)
-
 	DeleteDirectory(path)
-
 }
 
-func ExecuteCode(exitValue request.ExecuteCodeRequest) (response.ExecuteCodeResponse, error) {
-	// intputList := exitValue.InputList
-	// code := exitValue.Code
-	// language := exitValue.Language
-
-	return response.ExecuteCodeResponse{}, nil // 返回结果
-}
 
 // 把用户的代码保存为文件
 func SaveCodeToFile(code string) (*os.File, string, error) {
@@ -342,6 +329,274 @@ func isDir(path string) bool {
 	return fileInfo.IsDir()
 }
 ```
+
+###### 优化: 代码沙箱docker实现
+
+**前置准备**
+使用 `go-dockerclient:` github.com/fsouza/go-dockerclient
+
+**常规操作**
+1. 拉去镜像
+```go
+package main
+
+import (
+	"log"
+
+	docker "github.com/fsouza/go-dockerclient"
+)
+
+func main() {
+	// 创建 Docker 客户端
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		panic(err)
+	}
+	// 镜像名称
+	imageName := "openjdk:21-jdk"
+	// 镜像标签
+	tag := "latest"
+	// 配置拉取选项
+	options := docker.PullImageOptions{
+		Repository: imageName,
+		Tag:        tag,
+	}
+	// 拉取镜像
+	err = client.PullImage(options, docker.AuthConfiguration{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	// 输出拉取日志
+	log.Printf("镜像拉取完成：%s:%s\n", imageName, tag)
+}
+```
+
+2. 创建容器
+```go
+package main
+
+import (
+	"log"
+
+	docker "github.com/fsouza/go-dockerclient"
+)
+
+func main() {
+	// 创建 Docker 客户端
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// 镜像名称和标签
+	imageName := "openjdk"
+	tag := "latest"
+	// 容器配置
+	config := &docker.Config{
+		Image: imageName + ":" + tag,
+		// 设置命令为查看 Java 版本的命令
+		Cmd: []string{"java", "-version"},
+	}
+	// 创建容器请求
+	createOpts := docker.CreateContainerOptions{
+		Config: config,
+	}
+	// 创建容器
+	container, err := client.CreateContainer(createOpts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("容器 %s 创建成功\n", container.ID)
+}
+```
+
+3. 查看容器状态
+```go
+package main
+
+import (
+	"log"
+
+	docker "github.com/fsouza/go-dockerclient"
+)
+
+func main() {
+	// 创建 Docker 客户端
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 容器 ID
+	containerID := "325aa5d63cf6"
+
+	// 获取容器信息
+	containerInfo, err := client.InspectContainer(containerID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// 打印容器状态信息
+	log.Printf("容器状态: %s\n", containerInfo.State.StateString())
+}
+```
+
+4. 启动容器
+```go
+package main
+
+import (
+	"log"
+
+	docker "github.com/fsouza/go-dockerclient"
+)
+
+func main() {
+	// 创建 Docker 客户端
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// 容器 ID
+	containerID := "325aa5d63cf6"
+	// 启动容器
+	err = client.StartContainer(containerID, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("容器 %s 启动成功\n", containerID)
+}
+```
+
+5. 查看日志
+```go
+package main
+
+import (
+	"log"
+	"os"
+
+	docker "github.com/fsouza/go-dockerclient"
+)
+
+func main() {
+	// 创建 Docker 客户端
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 容器ID
+	containerID := "325aa5d63cf6"
+
+	// 读取容器日志
+	logOptions := docker.LogsOptions{
+		Container:    containerID,
+		OutputStream: os.Stdout, // 将日志输出到标准输出
+		ErrorStream:  os.Stderr, // 将错误信息输出到标准错误输出
+		Stdout:       true,      // 获取标准输出日志
+		Stderr:       true,      // 获取标准错误输出日志
+		Timestamps:   true,      // 包含时间戳信息
+		Follow:       true,      // 实时跟踪日志输出
+	}
+	err = client.Logs(logOptions)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
+6. 停止容器
+```go
+package main
+
+import (
+	"log"
+
+	docker "github.com/fsouza/go-dockerclient"
+)
+
+func main() {
+	// 创建 Docker 客户端
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// 容器ID
+	containerID := "325aa5d63cf6"
+
+	// 停止容器
+	err = client.StopContainer(containerID, 10) // 第二个参数是等待超时时间，单位为秒
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("容器 %s 已停止\n", containerID)
+}
+```
+
+7. 删除容器
+```go
+package main
+
+import (
+	"log"
+
+	docker "github.com/fsouza/go-dockerclient"
+)
+
+func main() {
+	// 创建 Docker 客户端
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// 容器ID
+	containerID := "325aa5d63cf6"
+	// 删除容器
+	err = client.RemoveContainer(docker.RemoveContainerOptions{
+		ID:    containerID,
+		Force: true, // 设置为 true 表示强制删除，即使容器在运行中也会被删除
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("容器 %s 已删除\n", containerID)
+}
+```
+
+8. 删除镜像
+```go
+package main
+
+import (
+	"log"
+
+	docker "github.com/fsouza/go-dockerclient"
+)
+
+func main() {
+	// 创建 Docker 客户端
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// 镜像名称或ID
+	imageName := "05af4ac0cbe3"
+	// 删除镜像
+	err = client.RemoveImage(imageName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("镜像 %s 已删除\n", imageName)
+}
+```
+
+
+
+
+
+
+
+
+
 
 
 

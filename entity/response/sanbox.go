@@ -1,9 +1,9 @@
 package response
 
 type ExecuteCodeResponse struct {
-	InputList []string
-	Code      string
-	Language  string
+	Language     string
+	Result       string
+	TestCaseList []string
 }
 
 type JudgeInfo struct {

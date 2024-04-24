@@ -13,7 +13,7 @@ import (
 func setupRouter() *gin.Engine {
 	router := gin.Default()
 
-	docs.SwaggerInfo.BasePath = "/api"
+	docs.SwaggerInfo.BasePath = "/"
 	// 注册 api 分组路由
 	apiGroup := router.Group("/api")
 	routes.SetApiGroupRoutes(apiGroup)
