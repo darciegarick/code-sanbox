@@ -18,7 +18,7 @@ func SetApiGroupRoutes(router *gin.RouterGroup) {
 	router.POST("/auth/info", app.Info)
 
 	router.POST("/sanbox/java", app.JavaSanBox)
-
+	router.POST("/docker/java", app.JavaDocker)
 	// authRouter := router.Group("").Use(middleware.JWTAuth(service.AppGuardName))
 	// {
 	// 	authRouter.POST("/auth/info", app.Info)

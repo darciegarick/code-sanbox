@@ -20,21 +20,21 @@ const (
 
 func ExecuteCode(exitValue request.ExecuteCodeRequest) (response.ExecuteCodeResponse, error) {
 	code := exitValue.Code
-	_, path, err := saveCodeToFile(code)
+	_, path, err := SaveCodeToFile(code)
 	if err != nil {
 		return response.ExecuteCodeResponse{}, err
 	}
-	compileFile(path)
-	result, runFileErr := runFile(path)
+	CompileFile(path)
+	result, runFileErr := RunFile(path)
 	if runFileErr != nil {
 		return response.ExecuteCodeResponse{}, runFileErr
 	}
-	deleteDirectory(path)
+	DeleteDirectory(path)
 	return response.ExecuteCodeResponse{Result: result}, nil
 }
 
 // 把用户的代码保存为文件
-func saveCodeToFile(code string) (*os.File, string, error) {
+func SaveCodeToFile(code string) (*os.File, string, error) {
 	globalCodePathName := filepath.Join(SMB_CODE_PATH, GLOBAL_CODE_DIR_NAME)
 	if _, err := os.Stat(globalCodePathName); err != nil {
 		if mkdirErr := os.Mkdir(globalCodePathName, 0755); mkdirErr != nil {
@@ -70,7 +70,7 @@ func saveCodeToFile(code string) (*os.File, string, error) {
 }
 
 // 编译文件
-func compileFile(mainJavaDirPath string) {
+func CompileFile(mainJavaDirPath string) {
 	mainJavaPath := filepath.Join(mainJavaDirPath, GLOBAL_JAVA_CLASS_NAME)
 	compileCmd := fmt.Sprintf("javac -encoding utf-8 %s", mainJavaPath)
 	cmd := exec.Command("bash", "-c", compileCmd)
@@ -82,7 +82,7 @@ func compileFile(mainJavaDirPath string) {
 }
 
 // 执行文件，获得执行结果列表
-func runFile(mainClassDirPath string) (string, error) {
+func RunFile(mainClassDirPath string) (string, error) {
 	compileCmd := fmt.Sprintf("java -cp  %s Main", mainClassDirPath)
 	cmd := exec.Command("bash", "-c", compileCmd)
 	output, err := cmd.CombinedOutput()
@@ -101,7 +101,7 @@ func runFile(mainClassDirPath string) (string, error) {
 
 // 删除文件夹
 // 删除指定目录及其所有文件的函数
-func deleteDirectory(dirPath string) error {
+func DeleteDirectory(dirPath string) error {
 	// 获取目录下的所有文件和子目录
 	files, err := filepath.Glob(filepath.Join(dirPath, "*"))
 	if err != nil {
@@ -112,7 +112,7 @@ func deleteDirectory(dirPath string) error {
 	for _, file := range files {
 		// 如果是子目录，则递归调用删除函数
 		if isDir(file) {
-			err := deleteDirectory(file)
+			err := DeleteDirectory(file)
 			if err != nil {
 				return err
 			}
