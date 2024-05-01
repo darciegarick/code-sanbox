@@ -18,7 +18,7 @@ const (
 	SMB_CODE_PATH          = "/home/ubuntu/smb-code/smb-go/code-sanbox"
 )
 
-func main() {
+func Main1() {
 	code := `public class Main {
 	public static void main(String[] args) {
 		int a =  1;

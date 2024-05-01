@@ -14,7 +14,7 @@ func JavaDocker(c *gin.Context) {
 	if err := c.ShouldBindJSON(&form); err != nil {
 		return
 	}
-	result, err := docker.DockerExecuteCode(form)
+	result, err := docker.ExecuteCode(form)
 	if err != nil {
 		response.BusinessFail(c, err.Error())
 	}

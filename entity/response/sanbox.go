@@ -1,5 +1,9 @@
 package response
 
+type CreateContainerResponse struct {
+	ContainerId     string
+}
+
 type ExecuteCodeResponse struct {
 	Language     string
 	Result       string
